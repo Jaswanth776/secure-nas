@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'nas-core'
+    static_configs:
+      - targets: ['172.21.30.99:9100']
+        labels:
+          node: 'nas-core'
+
+  - job_name: 'nas-intel'
+    static_configs:
+      - targets: ['172.21.30.100:9100']
+        labels:
+          node: 'nas-intel'
+
+  - job_name: 'nas-sec'
+    static_configs:
+      - targets: ['172.21.30.101:9100']
+        labels:
+          node: 'nas-sec'
+
+  - job_name: 'nas-fastapi'
+    static_configs:
+      - targets: ['172.21.30.100:8000']
+        labels:
+          service: 'intelligence-api'

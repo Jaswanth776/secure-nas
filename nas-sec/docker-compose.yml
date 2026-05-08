@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  security_engine:
+    build: ./security_engine
+    container_name: nas_security
+    restart: unless-stopped
+    volumes:
+      - /var/log/nextcloud:/var/log/nextcloud:ro
+      - /run/fail2ban:/run/fail2ban
+    networks:
+      - nas_monitor
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nas_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - nas_monitor
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: nas_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($|/)'
+    networks:
+      - nas_monitor
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: nas_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: CHANGE_ME
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - nas_monitor
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  nas_monitor:
+    driver: bridge

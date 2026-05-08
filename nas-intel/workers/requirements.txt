@@ -1,0 +1,9 @@
+celery==5.4.0
+redis==5.0.4
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.30
+python-magic==0.4.27
+Pillow==10.3.0
+scikit-learn==1.4.2
+pytesseract==0.3.10

@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nas_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nasanalytics
+      POSTGRES_USER: nasadmin
+      POSTGRES_PASSWORD: CHANGE_ME
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - nas_intel
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nasadmin -d nasanalytics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis_broker:
+    image: redis:7-alpine
+    container_name: nas_redis_broker
+    restart: unless-stopped
+    command: redis-server --requirepass NasCelery@2024!
+    volumes:
+      - redis_broker_data:/data
+    networks:
+      - nas_intel
+
+  fastapi:
+    build: ./api
+    container_name: nas_fastapi
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://nasadmin:NasPostgres%402024!@postgres:5432/nasanalytics
+      REDIS_URL: redis://:NasCelery@2024!@redis_broker:6379/0
+      NEXTCLOUD_URL: https://172.21.30.99
+      NEXTCLOUD_ADMIN_PASS: NasAdmin@2024!
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nas_intel
+
+  celery_worker:
+    build: ./workers
+    container_name: nas_celery
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://nasadmin:NasPostgres%402024!@postgres:5432/nasanalytics
+      REDIS_URL: redis://:NasCelery@2024!@redis_broker:6379/0
+    volumes:
+      - ./models:/app/models
+      - /mnt/nas-data:/nas-data:ro
+    depends_on:
+      - redis_broker
+      - postgres
+    networks:
+      - nas_intel
+
+volumes:
+  postgres_data:
+  redis_broker_data:
+
+networks:
+  nas_intel:
+    driver: bridge
