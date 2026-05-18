@@ -76,7 +76,7 @@ This project was built as a practical cybersecurity and infrastructure engineeri
 2. Security logs are generated and monitored
 3. Events are forwarded through the logging pipeline
 4. Security Engine monitors suspicious activity
-5. Prometheus collects infrastructure metrics
+5. Prometheus collects infrastructure metrics.
 6. Grafana visualizes monitoring and security data
 
 ---
